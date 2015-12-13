@@ -26,7 +26,7 @@ function! h:GetConf()
 
 		let options = readfile(l:foundconfig)
 
-		function l:toConf(acc, option) 
+		function! l:toConf(acc, option) 
 
 			let l:option = split(a:option, '\s\+')
 			let l:name = l:option[0]
