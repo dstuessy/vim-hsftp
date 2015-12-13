@@ -25,14 +25,22 @@ function! h:GetConf()
 	if strlen(l:foundconfig) > 0
 
 		let options = readfile(l:foundconfig)
-		
-		for i in options
-			let vname = substitute(i[0:stridx(i, ' ')], '^\s*\(.\{-}\)\s*$', '\1', '')
-			let vvalue = substitute(i[stridx(i, ' '):], '^\s*\(.\{-}\)\s*$', '\1', '')
-			let conf[vname] = vvalue
-		endfor
+
+		function l:toConf(acc, option) 
+
+			let l:option = split(a:option, '\s\+')
+			let l:name = l:option[0]
+			let l:val = join(l:option[1:], ' ')
+
+			let a:acc[l:name] = l:val
+
+			return a:acc
+		endfunction
+
+		let conf = s:reduce(function("l:toConf"), {}, options)
 
 		let conf['local'] = fnamemodify(l:foundconfig, ':h:p') . '/'
+		let conf['projectpath'] = s:cleanPath('/' . join(split(l:foundconfig, '/')[:-2], '/'))
 		let conf['localpath'] = expand('%:p')
 		let conf['remotepath'] = conf['remote'] . conf['localpath'][strlen(conf['local']):]
 	endif
@@ -68,10 +76,29 @@ endfunction
 "
 " Removes repeating forward slashes '/'
 "
-" @param string path
-" @return string Clean path
+" @param {string} path
+" @return {string} Clean path
 function! s:cleanPath(path)
-	return substitute(a:path, '/\+', '/', 'g')
+	return substitute(substitute(a:path, '/\+', '/', 'g'), '/\$', '', '')
+endfunction
+
+"
+" A traditional reduce function!
+"
+" @param {function} fn The function with which to reduce list entries.
+" @param {mixed} start The start value for the reduction
+" @param {list} list The list to reduce (immutably).
+" @return {mixed} The end result of the reduction.
+function! s:reduce(fn, start, list)
+
+	let l:newlist = deepcopy(a:list)
+	let l:acc = deepcopy(a:start)
+
+	for i in l:newlist
+		let l:acc = a:fn(l:acc, i)
+	endfor
+
+	return l:acc
 endfunction
 
 function! h:DownloadFile()
