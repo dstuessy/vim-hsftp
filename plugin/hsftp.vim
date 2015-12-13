@@ -22,9 +22,7 @@ function! h:GetConf()
 	let l:currentpath = expand('%:p:h')
 	let l:foundconfig = s:findConfig(l:currentpath)
 
-	echo l:foundconfig
-
-	if l:foundconfig
+	if strlen(l:foundconfig) > 0
 
 		let options = readfile(l:foundconfig)
 		
@@ -61,7 +59,7 @@ function! s:findConfig(currentpath)
 
 	" return false if config file is not readable
 	if (!filereadable(l:configpath))
-		return 0
+		return ""
 	endif
 
 	return l:configpath
@@ -126,8 +124,6 @@ endfunction
 function! h:UploadFolder()
 
 	let conf = h:GetConf()
-
-	return ""
 
 	" execute "! echo " . file
 	" let conf['localpath'] = expand('%:p')
