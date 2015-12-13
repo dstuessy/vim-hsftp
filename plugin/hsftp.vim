@@ -49,7 +49,7 @@ endfunction
 " @return {string|false} String of found config path, or false if not found
 function! s:findConfig(currentpath)
 
-	let l:configname = '.hsftpp'
+	let l:configname = '.hsftp'
 	let l:path = a:currentpath
 	let l:configpath = l:path . '/' . l:configname
 
