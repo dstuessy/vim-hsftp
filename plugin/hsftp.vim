@@ -24,18 +24,7 @@ function! h:GetConf()
 
 	if strlen(l:foundconfig) > 0
 
-		let l:options = readfile(l:foundconfig)
-
-		for l:option in l:options
-
-			echo type(l:option) 
-
-			let l:o = split(l:option, '\s\+')
-			let l:name = l:o[0]
-			let l:val = join(l:o[1:], ' ')
-
-			let l:conf[l:name] = l:val
-		endfor
+		let l:conf = s:parseConfig(l:foundconfig)
 
 		let l:conf['local'] = fnamemodify(l:foundconfig, ':h:p') . '/'
 		let l:conf['projectpath'] = s:cleanPath('/' . join(split(l:foundconfig, '/')[:-2], '/'))
@@ -69,6 +58,31 @@ function! s:findConfig(currentpath)
 	endif
 
 	return l:configpath
+endfunction
+
+" 
+" Parse the config options in 
+" a given config filepath, and 
+" return them as a dictionary.
+"
+" @param {string} configpath The path to the target config file.
+" @return {dictionary} Dictionary with all the config options from the target config file
+function! s:parseConfig(configpath)
+
+	let l:conf = {}
+	let l:options = readfile(a:configpath)
+
+	" add each option to the conf dictionary
+	for l:option in l:options
+
+		let l:o = split(l:option, '\s\+')
+		let l:name = l:o[0]
+		let l:val = join(l:o[1:], ' ')
+
+		let l:conf[l:name] = l:val
+	endfor
+
+	return l:conf
 endfunction
 
 "
