@@ -18,31 +18,29 @@
 " @return {dictionary} A dictionary holding all found config settings
 function! h:GetConf()
 
-	let conf = {}
+	let l:conf = {}
 	let l:currentpath = expand('%:p:h')
 	let l:foundconfig = s:findConfig(l:currentpath)
 
 	if strlen(l:foundconfig) > 0
 
-		let options = readfile(l:foundconfig)
+		let l:options = readfile(l:foundconfig)
 
-		function! l:toConf(acc, option) 
+		for l:option in l:options
 
-			let l:option = split(a:option, '\s\+')
-			let l:name = l:option[0]
-			let l:val = join(l:option[1:], ' ')
+			echo type(l:option) 
 
-			let a:acc[l:name] = l:val
+			let l:o = split(l:option, '\s\+')
+			let l:name = l:o[0]
+			let l:val = join(l:o[1:], ' ')
 
-			return a:acc
-		endfunction
+			let l:conf[l:name] = l:val
+		endfor
 
-		let conf = s:reduce(function("l:toConf"), {}, options)
-
-		let conf['local'] = fnamemodify(l:foundconfig, ':h:p') . '/'
-		let conf['projectpath'] = s:cleanPath('/' . join(split(l:foundconfig, '/')[:-2], '/'))
-		let conf['localpath'] = expand('%:p')
-		let conf['remotepath'] = conf['remote'] . conf['localpath'][strlen(conf['local']):]
+		let l:conf['local'] = fnamemodify(l:foundconfig, ':h:p') . '/'
+		let l:conf['projectpath'] = s:cleanPath('/' . join(split(l:foundconfig, '/')[:-2], '/'))
+		let l:conf['localpath'] = expand('%:p')
+		let l:conf['remotepath'] = l:conf['remote'] . l:conf['localpath'][strlen(l:conf['local']):]
 	endif
 
 	return conf
@@ -82,30 +80,11 @@ function! s:cleanPath(path)
 	return substitute(substitute(a:path, '/\+', '/', 'g'), '/\$', '', '')
 endfunction
 
-"
-" A traditional reduce function!
-"
-" @param {function} fn The function with which to reduce list entries.
-" @param {mixed} start The start value for the reduction
-" @param {list} list The list to reduce (immutably).
-" @return {mixed} The end result of the reduction.
-function! s:reduce(fn, start, list)
-
-	let l:newlist = deepcopy(a:list)
-	let l:acc = deepcopy(a:start)
-
-	for i in l:newlist
-		let l:acc = a:fn(l:acc, i)
-	endfor
-
-	return l:acc
-endfunction
-
 function! h:DownloadFile()
 
 	let conf = h:GetConf()
 
-	if has_key(conf, 'host')
+	if len(conf)
 
 		let action = printf('get %s %s', conf['remotepath'], conf['localpath'])
 		let cmd = printf('expect -c "set timeout 5; spawn sftp -P %s %s@%s; expect \"*assword:\"; send %s\r; expect \"sftp>\"; send \"%s\r\"; expect -re \"100%\"; send \"exit\r\";"', conf['port'], conf['user'], conf['host'], conf['pass'], action)
@@ -129,7 +108,7 @@ function! h:UploadFile()
 
 	let conf = h:GetConf()
 
-	if has_key(conf, 'host')
+	if len(conf)
 
 		let action = printf('put %s %s', conf['localpath'], conf['remotepath'])
 		let cmd = printf('expect -c "set timeout 5; spawn sftp -P %s %s@%s; expect \"*assword:\"; send %s\r; expect \"sftp>\"; send \"%s\r\"; expect -re \"100%\"; send \"exit\r\";"', conf['port'], conf['user'], conf['host'], conf['pass'], action)
@@ -156,7 +135,7 @@ function! h:UploadFolder()
 	" let conf['localpath'] = expand('%:p')
 	let action = "send pwd\r;"
 
-	if has_key(conf, 'host')
+	if len(conf)
 
 		for file in split(glob('%:p:h/*'), '\n')
 
